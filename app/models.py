@@ -30,7 +30,7 @@ class UserSchema(BaseModel):
         }
 
 
-class loginSchema(BaseModel):
+class LoginSchema(BaseModel):
     email : EmailStr = Field(default=None)
     password : str = Field(default=None)
 

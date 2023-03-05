@@ -1,5 +1,6 @@
-from fastapi import FastAPI
-from app.models import PostSchema
+from fastapi import Body, FastAPI
+from app.models import PostSchema, UserSchema, LoginSchema
+from app.auth.jwt_handler import signJWT
 
 posts = [
     {
@@ -15,6 +16,8 @@ posts = [
     },
 
 ]
+
+users = []
 
 app = FastAPI()
 
@@ -46,3 +49,27 @@ def add_post(post : PostSchema):
     posts.apend(post.dict())
 
     return {"data": "Post Added SuccessFully"}
+
+
+@app.post("/user/register" , tags = ["user"])
+def register(user : UserSchema):
+    user.append(user.to_dict())
+
+    return {"data": "Registered Successfully"}
+
+
+def check_user(data: LoginSchema):
+    for user in users:
+        if user.name == data.name and user.email == data.email:
+            return True
+    
+    return False
+
+@app.post("/user/login", tags = ["user"])
+def user_login(user : LoginSchema = Body(default=None)):
+
+    # check if user is already regstered or not
+    if check_user(user):
+        return signJWT(user.email)
+
+    return {"data" : "User does not exist or invalid login details"}
