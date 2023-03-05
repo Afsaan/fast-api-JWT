@@ -53,14 +53,15 @@ def add_post(post : PostSchema):
 
 @app.post("/user/register" , tags = ["user"])
 def register(user : UserSchema):
-    user.append(user.to_dict())
+    users.append(user.dict())
 
     return {"data": "Registered Successfully"}
 
 
 def check_user(data: LoginSchema):
     for user in users:
-        if user.name == data.name and user.email == data.email:
+        print(user['password'] , data.password)
+        if user['password'] == data.password and user['email'] == data.email:
             return True
     
     return False
