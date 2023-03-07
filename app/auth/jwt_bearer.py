@@ -11,12 +11,12 @@ class jwtBearer(HTTPBearer):
         if credentials:
             print(credentials)
             if not credentials.scheme == "Bearer":
-                raise HTTPException(status_code=403, detail="line 13")
+                raise HTTPException(status_code=403, detail="Invalid token or Expired credentials")
             if not self.verify_jwt(credentials.credentials):
-                raise HTTPException(status_code=403, detail="line 16")
+                raise HTTPException(status_code=403, detail="Invalid token or Expired credentials")
             return credentials.credentials
         else:
-            raise HTTPException(status_code=403, detail="line 18")
+            raise HTTPException(status_code=403, detail="Invalid token or Expired credentials")
 
     def verify_jwt(self, jwttoken: str):
         is_token_valid : bool = False
