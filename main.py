@@ -47,7 +47,7 @@ def get_one_post(id : int):
 @app.post("/posts", dependencies = [Depends(jwtBearer())], tags = ["posts"])
 def add_post(post : PostSchema):
     post.id = len(posts) + 1
-    posts.apend(post.dict())
+    posts.append(post.dict())
 
     return {"data": "Post Added SuccessFully"}
 

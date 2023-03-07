@@ -1,23 +1,22 @@
-from base64 import decode
-from calendar import c
-from enum import auto
 from fastapi import Request, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from .jwt_handler import decodeJWT
 
 class jwtBearer(HTTPBearer):
-    def __init__(self, auto_Error : bool = True):
-        super(jwtBearer, self).__init__(auto_error=auto_Error)
+    def __init__(self, auto_error : bool = True):
+        super(jwtBearer, self).__init__(auto_error=auto_error)
 
     async def __call__(self, request: Request):
         credentials : HTTPAuthorizationCredentials = await super(jwtBearer, self).__call__(request)
         if credentials:
-            if not credentials.schema == "Bearer":
-                raise HTTPException(status_code=403, details="Invalid or Expired token")
+            print(credentials)
+            if not credentials.scheme == "Bearer":
+                raise HTTPException(status_code=403, detail="line 13")
+            if not self.verify_jwt(credentials.credentials):
+                raise HTTPException(status_code=403, detail="line 16")
             return credentials.credentials
-
         else:
-            raise HTTPException(status_code=403, details="Invalid or Expired token")
+            raise HTTPException(status_code=403, detail="line 18")
 
     def verify_jwt(self, jwttoken: str):
         is_token_valid : bool = False
