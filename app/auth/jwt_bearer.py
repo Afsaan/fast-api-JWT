@@ -7,7 +7,7 @@ from .jwt_handler import decodeJWT
 
 class jwtBearer(HTTPBearer):
     def __init__(self, auto_Error : bool = True):
-        super(jwtBearer, self).__init__(auto_Error=auto_Error)
+        super(jwtBearer, self).__init__(auto_error=auto_Error)
 
     async def __call__(self, request: Request):
         credentials : HTTPAuthorizationCredentials = await super(jwtBearer, self).__call__(request)
