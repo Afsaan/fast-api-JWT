@@ -1,27 +1,24 @@
+import os
+import csv
+import pandas as pd
+import joblib
+
+
 from fastapi import Body, FastAPI, Depends
-from app.models import PostSchema, UserSchema, LoginSchema
+
+from app.models import PostSchema, UserSchema, LoginSchema, ModelSchema
 from app.auth.jwt_handler import signJWT
 from app.auth.jwt_bearer import jwtBearer
 
-posts = [
-    {
-        "id" : 1,
-        "title" : "panda",
-        "content" : "lazy animals"
-    },
+from constant import DATA_DIR_NAME, USER_DATA_PATH, TRAIN_DATA_PATH, MODEL_DIR_PATH, MODEL_PATH
 
-    {
-        "id" : 2,
-        "title" : "elephant",
-        "content" : "big animals"
-    },
 
-]
+#load the model
+model = joblib.load(f"{MODEL_DIR_PATH}/{MODEL_PATH}")
 
 users = []
 
 app = FastAPI()
-
 
 #basic home page
 @app.get("/", tags = ["Greet"])
@@ -29,32 +26,46 @@ def get_post():
     return {"Hello": "Welcome to post page"}
 
 
-# get
-@app.get("/posts", tags = ["posts"])
-def get_post():
-    return {"data": posts}
+# add the data to csv and predictions
+@app.get("/predict", dependencies = [Depends(jwtBearer())], tags = ["predictions"])
+def get_post(value: ModelSchema):
+    data = [values for values in value.dict().values()]
 
-@app.get("/post/{id}" , tags = ["posts"])
-def get_one_post(id : int):
-    if id > len(posts):
-        return {"error": "post with the id does not exist"}
+    if not os.path.exists(DATA_DIR_NAME):
+        os.makedirs(DATA_DIR_NAME)
 
-    for post in posts:
-        if post["id"] == id:
-            return {"data": post}
+    with open(f"{DATA_DIR_NAME}/{TRAIN_DATA_PATH}", 'a', newline='') as f:
+        # create a csv.writer object
+        writer = csv.writer(f)
+        # write data into the CSV file
+        writer.writerows([data])
+    
+    # predict the output
+    result = model.predict([data])
+    if result[0] == 1:
+        return {"data": "person is Diabatic"}
+    
+    return {"data": "person is NOT Diabatic"}
 
-
-@app.post("/posts", dependencies = [Depends(jwtBearer())], tags = ["posts"])
+@app.post("/train", dependencies = [Depends(jwtBearer())], tags = ["train"])
 def add_post(post : PostSchema):
-    post.id = len(posts) + 1
-    posts.append(post.dict())
-
-    return {"data": "Post Added SuccessFully"}
+    pass
+    return {"data": "Model Trained SuccessFully"}
 
 
 @app.post("/user/register" , tags = ["user"])
 def register(user : UserSchema):
-    users.append(user.dict())
+    data = [values for values in user.dict().values()]
+    print(data)
+    #check if file is present or not
+    if not os.path.exists(DATA_DIR_NAME):
+        os.makedirs(DATA_DIR_NAME)
+
+    with open(f"{DATA_DIR_NAME}/{USER_DATA_PATH}", 'a', newline='') as f:
+        # create a csv.writer object
+        writer = csv.writer(f)
+        # write data into the CSV file
+        writer.writerows([data])
 
     return {"data": "Registered Successfully"}
 
