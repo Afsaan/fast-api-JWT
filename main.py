@@ -4,7 +4,10 @@ import pandas as pd
 import joblib
 
 
-from fastapi import Body, FastAPI, Depends, HTTPException
+from fastapi import Body, FastAPI, Depends, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 
 from app.models import UserSchema, LoginSchema, ModelSchema
 from app.auth.jwt_handler import signJWT
@@ -17,6 +20,27 @@ from constant import DATA_DIR_NAME, USER_DATA_PATH, TRAIN_DATA_PATH, MODEL_DIR_P
 #load the model
 model = joblib.load(f"{MODEL_DIR_PATH}/{MODEL_PATH}")
 app = FastAPI()
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = []
+    for error in exc.errors():
+        error_msg = error["msg"]
+        field = error["loc"][0]
+        errors.append({field: error_msg})
+    return JSONResponse(content={"detail": errors}, status_code=400)
+
+@app.exception_handler(ValidationError)
+async def validation_exception_handler(request: Request, exc: ValidationError):
+    errors = []
+    for error in exc.errors():
+        # Get the error message for each field error
+        error_msg = error["msg"]
+        # Get the field that has the error
+        field = error["loc"][0]
+        errors.append({field: error_msg})
+    # Return a JSON response with a 422 status code and the error details
+    return JSONResponse(content={"detail": errors}, status_code=422)
 
 #basic home page
 @app.get("/", tags = ["Greet"])
@@ -89,10 +113,8 @@ def check_user(data: LoginSchema, user_db):
     return False
 
 @app.post("/user/login", tags = ["user"])
-def user_login(user : LoginSchema = Body(default=None)):
+def user_login(user : LoginSchema = Body()):
 
-    if "email" not in user or "password" not in user:
-        raise HTTPException(status_code=400, detail="Invalid item payload")
     #load the csv file for user data
     user_db = pd.read_csv(f'{DATA_DIR_NAME}/{USER_DATA_PATH}')
 
