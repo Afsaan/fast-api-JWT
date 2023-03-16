@@ -6,7 +6,7 @@ import joblib
 
 from fastapi import Body, FastAPI, Depends, HTTPException
 
-from app.models import PostSchema, UserSchema, LoginSchema, ModelSchema
+from app.models import UserSchema, LoginSchema, ModelSchema
 from app.auth.jwt_handler import signJWT
 from app.auth.jwt_bearer import jwtBearer
 from app.train import train_model
@@ -63,7 +63,7 @@ def register(user : UserSchema):
 
     if not user.email:
         raise HTTPException(status_code=422, detail="Missing email field")
-    if user.password <= 0:
+    if not user.password:
         raise HTTPException(status_code=422, detail="Missing password field")
     
     data = [values for values in user.dict().values()]
@@ -101,22 +101,3 @@ def user_login(user : LoginSchema = Body(default=None)):
         return signJWT(user.email)
 
     return {"data" : "User does not exist or invalid login details"}
-
-
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-
-class Item(BaseModel):
-    name: str
-    price: float
-
-app = FastAPI()
-
-@app.post("/items/")
-async def create_item(item: Item):
-    if not item.name:
-        raise HTTPException(status_code=422, detail="Missing name field")
-    if item.price <= 0:
-        raise HTTPException(status_code=422, detail="Invalid price value")
-    # ... create the item ...
-    return {"item": item}
