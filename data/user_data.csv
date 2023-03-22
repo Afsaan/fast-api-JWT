@@ -2,3 +2,4 @@ username,password
 test1@example.com,test1
 test@example.com,test
 user@example.com,testdata
+user@example.com,string

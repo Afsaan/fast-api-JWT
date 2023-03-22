@@ -23,15 +23,17 @@ app = FastAPI()
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+  
     errors = []
     for error in exc.errors():
         error_msg = error["msg"]
         field = error["loc"][0]
         errors.append({field: error_msg})
-    return JSONResponse(content={"detail": errors}, status_code=400)
+    return JSONResponse(content={"detail": errors, "body": error["ctx"]["doc"] }, status_code=400)
 
 @app.exception_handler(ValidationError)
 async def validation_exception_handler(request: Request, exc: ValidationError):
+    
     errors = []
     for error in exc.errors():
         # Get the error message for each field error
