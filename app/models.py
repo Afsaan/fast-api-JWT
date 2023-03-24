@@ -1,5 +1,31 @@
 from email.policy import default
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, validator
+
+class PayloadSchema(BaseModel):
+    adhoc: bool
+    analyticid: str
+    hints: list[str]
+    payload: dict
+
+    @validator('hints')
+    def options_validator(cls, values):
+        allowed_values = ['cca','cc']
+        for value in values:
+            if value not in allowed_values:
+                raise ValueError(f'Invalid option: {value}. Allowed values are {allowed_values}.')
+        return values
+
+    @validator('adhoc')
+    def bool_validator(cls, values):
+        if not values:
+            raise ValueError('is_active must be a True')
+        return values
+
+    @validator('payload')
+    def dict_validator(cls, values):
+        if not isinstance(values, dict):
+            raise ValueError('payload must be a dict data')
+        return values
 
 class ModelSchema(BaseModel):
     preg : int = Field(default=None)

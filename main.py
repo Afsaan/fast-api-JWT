@@ -4,12 +4,12 @@ import pandas as pd
 import joblib
 
 
-from fastapi import Body, FastAPI, Depends, HTTPException, Request
+from fastapi import Body, FastAPI, Depends, HTTPException, Request, Header
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
-from app.models import UserSchema, LoginSchema, ModelSchema
+from app.models import UserSchema, LoginSchema, ModelSchema, PayloadSchema
 from app.auth.jwt_handler import signJWT
 from app.auth.jwt_bearer import jwtBearer
 from app.train import train_model
@@ -21,7 +21,7 @@ from constant import DATA_DIR_NAME, USER_DATA_PATH, TRAIN_DATA_PATH, MODEL_DIR_P
 model = joblib.load(f"{MODEL_DIR_PATH}/{MODEL_PATH}")
 app = FastAPI()
 
-@app.exception_handler(RequestValidationError)
+# @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
   
     errors = []
@@ -30,19 +30,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         field = error["loc"][0]
         errors.append({field: error_msg})
     return JSONResponse(content={"detail": errors, "body": error["ctx"]["doc"] }, status_code=400)
-
-@app.exception_handler(ValidationError)
-async def validation_exception_handler(request: Request, exc: ValidationError):
-    
-    errors = []
-    for error in exc.errors():
-        # Get the error message for each field error
-        error_msg = error["msg"]
-        # Get the field that has the error
-        field = error["loc"][0]
-        errors.append({field: error_msg})
-    # Return a JSON response with a 422 status code and the error details
-    return JSONResponse(content={"detail": errors}, status_code=422)
 
 #basic home page
 @app.get("/", tags = ["Greet"])
@@ -125,3 +112,13 @@ def user_login(user : LoginSchema = Body()):
         return signJWT(user.email)
 
     return {"data" : "User does not exist or invalid login details"}
+
+@app.post('/payload')
+async def handle_payload(payload: PayloadSchema , meta_transid: str = Header(name="meta-transid"), 
+                            meta_src_envrmt:str = Header(name="meta-src-envrmt")):
+    try:
+        # process the payload here
+        return {'message': 'success'}
+    except ValueError as e:
+        print('Error processing payload')
+        raise HTTPException(status_code=400, detail=str(e))
